@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FreelaMatch - Encontre os melhores Freelancers</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>FreelaMatch</h1>
+      <nav>
+        <a
+          href="#"
+          class="btn"
+          id="btnPublicar"
+          style="
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+          "
+          >Publicar Vaga</a
+        >
+        <div id="menuDeslogado" style="display: flex; gap: 1rem">
+          <a
+            href="#"
+            class="btn"
+            id="btnEntrar"
+            style="
+              background: transparent;
+              color: var(--text);
+              border: 1px solid #ccc;
+            "
+            >Entrar</a
+          >
+          <a href="#" class="btn" id="btnCadastrar">Cadastrar</a>
+        </div>
+        <div
+          id="menuLogado"
+          style="display: none; align-items: center; gap: 1rem"
+        >
+          <span
+            id="nomeEmpresaDisplay"
+            style="font-weight: bold; font-size: 0.95rem"
+          ></span>
+          <a
+            href="#"
+            class="btn"
+            id="btnEditarPerfil"
+            style="
+              background: transparent;
+              color: var(--text);
+              border: 1px solid #ccc;
+            "
+            >Editar Perfil</a
+          >
+          <a
+            href="#"
+            class="btn"
+            id="btnSair"
+            style="background: #ef4444; color: white"
+            >Sair</a
+          >
+        </div>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <h2>Encontre os melhores freelas e oportunidades</h2>
+      <p>Trabalhos por dia, projetos rápidos e vagas na sua região.</p>
+      <div class="search-bar">
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="inputBusca"
+            autocomplete="off"
+            placeholder="Em qual cidade você busca? (ex: São Paulo)"
+          />
+          <div id="sugestoesContainer" class="sugestoes-box"></div>
+        </div>
+        <button class="btn" id="btnBuscar">Buscar</button>
+      </div>
+    </section>
+
+    <main class="container" style="background-color: white">
+      <h2>Vagas e Freelas Disponíveis</h2>
+      <div class="jobs-grid">
+        <!-- Vaga 1 -->
+        <div class="job-card">
+          <div class="company-header">
+            <img
+              src="https://ui-avatars.com/api/?name=Eventos+Cia&background=random"
+              alt="Eventos & Cia"
+            />
+            <div>
+              <h3>Recepcionista para Evento</h3>
+              <div class="company-name">Eventos & Cia</div>
+            </div>
+          </div>
+          <p style="margin-bottom: 1rem; font-size: 0.95rem">
+            Buscamos recepcionista para credenciamento em evento durante o final
+            de semana.
+          </p>
+          <div class="job-detail">
+            <strong>📍 Local:</strong> São Paulo, SP (Centro)
+          </div>
+          <div class="job-detail">
+            <strong>📞 Contato:</strong> (11) 98765-4321
+          </div>
+
+          <div class="rate" style="margin-top: 1rem">R$ 150 / dia</div>
+          <button
+            class="btn"
+            style="width: 100%"
+            onclick="
+              window.open(
+                'https://wa.me/5511987654321?text=Olá!%20Vi%20a%20vaga%20de%20Recepcionista%20para%20Evento%20na%20FreelaMatch.%20Ainda%20está%20disponível%3F',
+                '_blank',
+              )
+            "
+          >
+            Me Candidatar
+          </button>
+        </div>
+
+        <!-- Vaga 2 -->
+        <div class="job-card">
+          <div class="company-header">
+            <img
+              src="https://ui-avatars.com/api/?name=Super+Mercado&background=random"
+              alt="Super Mercado"
+            />
+            <div>
+              <h3>Promotor(a) de Vendas</h3>
+              <div class="company-name">Supermercados Nova Era</div>
+            </div>
+          </div>
+          <p style="margin-bottom: 1rem; font-size: 0.95rem">
+            Precisa-se de promotor para ação de degustação de produtos no
+            supermercado.
+          </p>
+          <div class="job-detail">
+            <strong>📍 Local:</strong> Rio de Janeiro, RJ (Copacabana)
+          </div>
+          <div class="job-detail">
+            <strong>📞 Contato:</strong> (21) 99999-1111
+          </div>
+
+          <div class="rate" style="margin-top: 1rem">R$ 120 / dia</div>
+          <button
+            class="btn"
+            style="width: 100%"
+            onclick="
+              window.open(
+                'https://wa.me/5521999991111?text=Olá!%20Vi%20a%20vaga%20de%20Promotor(a)%20de%20Vendas%20na%20FreelaMatch.%20Ainda%20está%20disponível%3F',
+                '_blank',
+              )
+            "
+          >
+            Me Candidatar
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal de Cadastro da Empresa -->
+    <div id="cadastroModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 style="margin-bottom: 1.5rem; color: var(--primary)">
+          Cadastro de Empresa
+        </h2>
+        <form id="formCadastro">
+          <div class="form-group">
+            <label for="nome">Nome da empresa</label>
+            <input
+              type="text"
+              id="nome"
+              placeholder="Nome da sua empresa"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="cnpj">CNPJ</label>
+            <input
+              type="text"
+              id="cnpj"
+              placeholder="00.000.000/0000-00"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="cep">CEP</label>
+            <input type="text" id="cep" placeholder="00000-000" required />
+          </div>
+          <div class="form-group">
+            <label for="endereco">Endereço da empresa</label>
+            <input
+              type="text"
+              id="endereco"
+              placeholder="Rua, Avenida, etc."
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="bairro">Bairro</label>
+            <input
+              type="text"
+              id="bairro"
+              placeholder="Nome do bairro"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="numero">Número da empresa</label>
+            <input
+              type="text"
+              id="numero"
+              placeholder="Número do local"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="whatsapp">WhatsApp (Contato)</label>
+            <input
+              type="text"
+              id="whatsapp"
+              placeholder="(11) 99999-9999"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="senha">Senha</label>
+            <input
+              type="password"
+              id="senha"
+              placeholder="Crie uma senha"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="btn"
+            style="width: 100%; margin-top: 1rem"
+          >
+            Concluir Cadastro
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal de Login -->
+    <div id="loginModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 style="margin-bottom: 1.5rem; color: var(--primary)">Entrar</h2>
+        <form id="formLogin">
+          <div class="form-group">
+            <label for="nomeLogin">Nome da empresa</label>
+            <input
+              type="text"
+              id="nomeLogin"
+              placeholder="Nome cadastrado"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="senhaLogin">Senha</label>
+            <input
+              type="password"
+              id="senhaLogin"
+              placeholder="Sua senha"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="btn"
+            style="width: 100%; margin-top: 1rem"
+          >
+            Fazer Login
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal de Publicar Vaga -->
+    <div id="publicarModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 style="margin-bottom: 1.5rem; color: var(--primary)">
+          Publicar Nova Vaga
+        </h2>
+        <form id="formPublicar">
+          <div class="form-group">
+            <label for="tituloVaga">Título da Vaga</label>
+            <input
+              type="text"
+              id="tituloVaga"
+              placeholder="Ex: Recepcionista, Promotor..."
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="descVaga">Descrição da Atividade</label>
+            <input
+              type="text"
+              id="descVaga"
+              placeholder="O que o freelancer irá fazer?"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="valorVaga">Valor (R$)</label>
+            <input
+              type="text"
+              id="valorVaga"
+              placeholder="Ex: 150 / dia"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="horarioVaga">Horário</label>
+            <input
+              type="text"
+              id="horarioVaga"
+              placeholder="Ex: 08:00 às 18:00"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="btn"
+            style="width: 100%; margin-top: 1rem"
+          >
+            Publicar Vaga
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal de Editar Perfil -->
+    <div id="editarPerfilModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 style="margin-bottom: 1.5rem; color: var(--primary)">
+          Editar Perfil da Empresa
+        </h2>
+        <form id="formEditarPerfil">
+          <div class="form-group">
+            <label for="editNome">Nome da empresa</label>
+            <input type="text" id="editNome" required />
+          </div>
+          <div class="form-group">
+            <label for="editCnpj">CNPJ</label>
+            <input type="text" id="editCnpj" required />
+          </div>
+          <div class="form-group">
+            <label for="editCep">CEP</label>
+            <input type="text" id="editCep" required />
+          </div>
+          <div class="form-group">
+            <label for="editEndereco">Endereço da empresa</label>
+            <input type="text" id="editEndereco" required />
+          </div>
+          <div class="form-group">
+            <label for="editBairro">Bairro</label>
+            <input type="text" id="editBairro" required />
+          </div>
+          <div class="form-group">
+            <label for="editNumero">Número da empresa</label>
+            <input type="text" id="editNumero" required />
+          </div>
+          <div class="form-group">
+            <label for="editWhatsapp">WhatsApp (Contato)</label>
+            <input type="text" id="editWhatsapp" required />
+          </div>
+          <div class="form-group">
+            <label for="editSenha">Senha</label>
+            <input type="password" id="editSenha" required />
+          </div>
+          <button
+            type="submit"
+            class="btn"
+            style="width: 100%; margin-top: 1rem"
+          >
+            Salvar Alterações
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Script para gerenciar os modais e armazenamento -->
+    <script src="script.js"></script>
+  </body>
+</html>
