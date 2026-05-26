@@ -81,13 +81,14 @@ export type FreelancerApplicationView = {
 };
 
 export type DashboardStoreContextValue = DashboardStoreState & {
+  isLoading: boolean;
   currentCompany: MockCompany | null;
   companyJobs: MockJob[];
   stats: DashboardStats;
   currentFreelancer: MockFreelancer | null;
   freelancerApplications: MockApplication[];
   freelancerStats: FreelancerStats;
-  currentPlan: SubscriptionPlan; // sempre preenchido — fallback para plano gratuito
+  currentPlan: SubscriptionPlan;
   canPublishJob: boolean;
   createJob: (values: JobFormValues) => MockJob;
   updateJob: (jobId: string, values: JobFormValues) => MockJob | null;
@@ -98,7 +99,7 @@ export type DashboardStoreContextValue = DashboardStoreState & {
   applyToJob: (vagaId: string, mensagem: string) => MockApplication | null;
   loginAsCompany: () => void;
   loginAsFreelancer: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   getJobById: (jobId: string) => MockJob | null;
   getApplicationsByJobId: (jobId: string) => CandidateView[];
   activateSubscription: (planId: PlanId) => Promise<void>;

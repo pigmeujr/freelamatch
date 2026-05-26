@@ -25,8 +25,8 @@ export function FreelancerShell({ title, description, children }: FreelancerShel
   const { currentFreelancer, logout } = useDashboardStore();
   const [isOpen, setIsOpen] = useState(false);
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     router.push("/login");
   }
 

@@ -8,24 +8,91 @@ import { useDashboardStore } from "@/components/providers/dashboard-store-provid
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 type Role = "empresa" | "freelancer";
+
+const USE_SUPABASE = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+);
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loginAsCompany, loginAsFreelancer } = useDashboardStore();
   const [role, setRole] = useState<Role>("empresa");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
-    if (role === "empresa") {
-      loginAsCompany();
-      router.push(searchParams.get("next") ?? "/dashboard/empresa");
-    } else {
-      loginAsFreelancer();
-      router.push(searchParams.get("next") ?? "/dashboard/freelancer");
+    try {
+      if (!USE_SUPABASE) {
+        // Mock mode — mantém comportamento original
+        if (role === "empresa") {
+          loginAsCompany();
+          router.push(searchParams.get("next") ?? "/dashboard/empresa");
+        } else {
+          loginAsFreelancer();
+          router.push(searchParams.get("next") ?? "/dashboard/freelancer");
+        }
+        return;
+      }
+
+      const form = event.currentTarget;
+      const email = (form.elements.namedItem("email") as HTMLInputElement).value.trim();
+      const password = (form.elements.namedItem("password") as HTMLInputElement).value;
+
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (signInError) {
+        if (
+          signInError.message.includes("Invalid login credentials") ||
+          signInError.message.includes("invalid_credentials")
+        ) {
+          setError("E-mail ou senha incorretos.");
+        } else if (signInError.message.includes("Email not confirmed")) {
+          setError("E-mail não confirmado. Verifique sua caixa de entrada.");
+        } else {
+          setError(signInError.message);
+        }
+        return;
+      }
+
+      // Busca o perfil para saber o role
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setError("Erro ao obter dados do usuário. Tente novamente.");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      const userRole = profile?.role ?? "freelancer";
+      const next = searchParams.get("next");
+
+      router.refresh();
+
+      if (next) {
+        router.push(next);
+      } else {
+        router.push(userRole === "empresa" ? "/dashboard/empresa" : "/dashboard/freelancer");
+      }
+    } catch {
+      setError("Ocorreu um erro inesperado. Tente novamente.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -34,67 +101,93 @@ export default function LoginPage() {
       <AuthCard
         eyebrow="Acesse sua conta"
         title="Entrar no FreelaMatch"
-        description="Login mock local. Escolha seu perfil e clique em entrar para acessar o painel correspondente."
+        description={
+          USE_SUPABASE
+            ? "Entre com seu e-mail e senha para acessar o painel."
+            : "Login de demonstração. Escolha seu perfil e clique em entrar para acessar o painel."
+        }
         footer={
           <p className="text-sm text-slate-600">
             Ainda não tem conta?{" "}
             <Link className="font-semibold text-brand-700" href="/cadastro/freelancer">
-              Cadastre-se como freelancer
+              Freelancer
+            </Link>{" "}
+            ou{" "}
+            <Link className="font-semibold text-brand-700" href="/cadastro/empresa">
+              Empresa
             </Link>
           </p>
         }
       >
         <form className="space-y-5" onSubmit={handleSubmit}>
-          <div className="flex rounded-2xl border border-slate-200 bg-slate-50 p-1">
-            <button
-              className={cn(
-                "flex-1 rounded-xl py-2.5 text-sm font-semibold transition",
-                role === "empresa"
-                  ? "bg-white text-slate-950 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700",
-              )}
-              onClick={() => setRole("empresa")}
-              type="button"
-            >
-              Empresa
-            </button>
-            <button
-              className={cn(
-                "flex-1 rounded-xl py-2.5 text-sm font-semibold transition",
-                role === "freelancer"
-                  ? "bg-white text-slate-950 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700",
-              )}
-              onClick={() => setRole("freelancer")}
-              type="button"
-            >
-              Freelancer
-            </button>
-          </div>
+          {!USE_SUPABASE && (
+            <div className="flex rounded-2xl border border-slate-200 bg-slate-50 p-1">
+              <button
+                className={cn(
+                  "flex-1 rounded-xl py-2.5 text-sm font-semibold transition",
+                  role === "empresa" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-700",
+                )}
+                onClick={() => setRole("empresa")}
+                type="button"
+              >
+                Empresa
+              </button>
+              <button
+                className={cn(
+                  "flex-1 rounded-xl py-2.5 text-sm font-semibold transition",
+                  role === "freelancer" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-700",
+                )}
+                onClick={() => setRole("freelancer")}
+                type="button"
+              >
+                Freelancer
+              </button>
+            </div>
+          )}
 
           <label className="block space-y-2">
             <span className="text-sm font-medium text-slate-700">E-mail</span>
             <Input
-              key={role}
-              defaultValue={role === "empresa" ? "empresa@freelamatch.com" : "freelancer@freelamatch.com"}
+              key={!USE_SUPABASE ? role : "supabase"}
+              defaultValue={
+                !USE_SUPABASE
+                  ? role === "empresa"
+                    ? "empresa@freelamatch.com"
+                    : "freelancer@freelamatch.com"
+                  : ""
+              }
               name="email"
               type="email"
+              required
+              autoComplete="email"
             />
           </label>
 
           <label className="block space-y-2">
             <span className="text-sm font-medium text-slate-700">Senha</span>
-            <Input defaultValue="123456" name="password" type="password" />
+            <Input
+              defaultValue={!USE_SUPABASE ? "123456" : ""}
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+            />
           </label>
 
-          <div className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-800">
-            {role === "empresa"
-              ? "Login mock para a empresa demo (Studio Aurora). Basta clicar em entrar."
-              : "Login mock para o freelancer demo (Mariana Costa). Basta clicar em entrar."}
-          </div>
+          {!USE_SUPABASE && (
+            <div className="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-800">
+              {role === "empresa"
+                ? "Login demo para a empresa Studio Aurora. Basta clicar em entrar."
+                : "Login demo para o freelancer Mariana Costa. Basta clicar em entrar."}
+            </div>
+          )}
 
-          <Button className="w-full" type="submit">
-            Entrar como {role === "empresa" ? "empresa" : "freelancer"}
+          {error && (
+            <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+          )}
+
+          <Button className="w-full" type="submit" disabled={isLoading}>
+            {isLoading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
       </AuthCard>

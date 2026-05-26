@@ -26,8 +26,8 @@ export function DashboardShell({ title, description, children }: DashboardShellP
   const { currentCompany, currentPlan, logout } = useDashboardStore();
   const [isOpen, setIsOpen] = useState(false);
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     router.push("/login");
   }
 
