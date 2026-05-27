@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -13,9 +13,27 @@ const navItems = [
   { href: "/#para-empresas", label: "Para empresas" },
 ];
 
+const registerOptions = [
+  { href: "/cadastro/freelancer", label: "Sou Freelancer" },
+  { href: "/cadastro/empresa", label: "Sou Empresa" },
+];
+
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const pathname = usePathname();
+  const registerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (registerRef.current && !registerRef.current.contains(event.target as Node)) {
+        setIsRegisterOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <>
@@ -54,13 +72,43 @@ export function Header() {
               >
                 Entrar
               </Link>
-              <Link
-                href="/cadastro/freelancer"
-                className="inline-flex h-10 items-center justify-center rounded-2xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700"
-              >
-                Cadastrar
-              </Link>
+
+              {/* Dropdown Cadastrar */}
+              <div className="relative" ref={registerRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterOpen((prev) => !prev)}
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-2xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700"
+                >
+                  Cadastrar
+                  <svg
+                    className={cn("h-3.5 w-3.5 transition-transform", isRegisterOpen && "rotate-180")}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {isRegisterOpen && (
+                  <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-48 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+                    {registerOptions.map((option) => (
+                      <Link
+                        key={option.href}
+                        href={option.href}
+                        onClick={() => setIsRegisterOpen(false)}
+                        className="flex items-center px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-brand-700"
+                      >
+                        {option.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+
             <button
               className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 text-slate-700 transition hover:bg-slate-50 md:hidden"
               onClick={() => setIsOpen(true)}
@@ -136,7 +184,14 @@ export function Header() {
                 className="flex h-11 w-full items-center justify-center rounded-2xl bg-brand-600 text-sm font-semibold text-white transition hover:bg-brand-700"
                 onClick={() => setIsOpen(false)}
               >
-                Cadastrar-se gratis
+                Sou Freelancer
+              </Link>
+              <Link
+                href="/cadastro/empresa"
+                className="flex h-11 w-full items-center justify-center rounded-2xl border border-brand-600 text-sm font-semibold text-brand-700 transition hover:bg-brand-50"
+                onClick={() => setIsOpen(false)}
+              >
+                Sou Empresa
               </Link>
             </div>
           </nav>

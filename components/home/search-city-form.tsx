@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { loadCities, normalizeName, type CitySuggestion } from "@/lib/ibge";
 
 type HiddenField = {
   name: string;
@@ -16,50 +17,10 @@ type SearchCityFormProps = {
   submitLabel?: string;
   submitOnSelect?: boolean;
   hiddenFields?: HiddenField[];
+  /** Quando fornecido, filtra apenas cidades desse estado (sigla, ex.: "SP"). Vazio = todos os estados. */
+  stateFilter?: string;
   children?: React.ReactNode;
 };
-
-type IbgeCity = {
-  id: number;
-  nome: string;
-  microrregiao: {
-    mesorregiao: {
-      UF: {
-        sigla: string;
-      };
-    };
-  };
-};
-
-type CitySuggestion = {
-  id: number;
-  name: string;
-  state: string;
-};
-
-let citiesCache: CitySuggestion[] | null = null;
-
-async function loadCities() {
-  if (citiesCache) {
-    return citiesCache;
-  }
-
-  const response = await fetch("https://servicodados.ibge.gov.br/api/v1/localidades/municipios");
-
-  if (!response.ok) {
-    throw new Error("Não foi possível carregar cidades do IBGE.");
-  }
-
-  const data = (await response.json()) as IbgeCity[];
-
-  citiesCache = data.map((city) => ({
-    id: city.id,
-    name: city.nome,
-    state: city.microrregiao.mesorregiao.UF.sigla,
-  }));
-
-  return citiesCache;
-}
 
 export function SearchCityForm({
   action = "/vagas",
@@ -67,6 +28,7 @@ export function SearchCityForm({
   submitLabel = "Buscar vagas",
   submitOnSelect = false,
   hiddenFields = [],
+  stateFilter = "",
   children,
 }: SearchCityFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -80,7 +42,7 @@ export function SearchCityForm({
     let isMounted = true;
 
     async function searchCities() {
-      if (cityInput.trim().length < 2) {
+      if (cityInput.trim().length < 3) {
         setCities([]);
         setIsOpen(false);
         return;
@@ -90,9 +52,14 @@ export function SearchCityForm({
 
       try {
         const allCities = await loadCities();
-        const normalizedInput = cityInput.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const normalizedInput = normalizeName(cityInput);
+
         const filteredCities = allCities
-          .filter((city) => city.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedInput))
+          .filter((city) => {
+            const matchesName = normalizeName(city.name).includes(normalizedInput);
+            const matchesState = stateFilter ? city.state === stateFilter : true;
+            return matchesName && matchesState;
+          })
           .slice(0, 8);
 
         if (isMounted) {
@@ -117,19 +84,25 @@ export function SearchCityForm({
       isMounted = false;
       window.clearTimeout(timeout);
     };
-  }, [cityInput]);
+  }, [cityInput, stateFilter]);
 
   const helperText = useMemo(() => {
     if (isLoading) {
-      return "Buscando cidades no IBGE...";
+      return "Buscando cidades...";
     }
 
-    if (cityInput.trim().length >= 2 && cities.length === 0) {
-      return "Nenhuma cidade encontrada.";
+    if (cityInput.trim().length < 3) {
+      return "Digite pelo menos 3 letras para ver sugestões.";
     }
 
-    return "Digite pelo menos 2 letras para ver sugestões.";
-  }, [cities.length, cityInput, isLoading]);
+    if (cities.length === 0) {
+      return stateFilter
+        ? `Nenhuma cidade encontrada em ${stateFilter}. Tente outro nome ou mude o estado.`
+        : "Nenhuma cidade encontrada. Verifique o nome digitado.";
+    }
+
+    return null;
+  }, [cities.length, cityInput, isLoading, stateFilter]);
 
   function navigateWithParams(city: string) {
     const params = new URLSearchParams();
@@ -220,7 +193,7 @@ export function SearchCityForm({
             </div>
           ) : null}
 
-          <p className="mt-2 px-1 text-xs text-slate-500">{helperText}</p>
+          {helperText ? <p className="mt-2 px-1 text-xs text-slate-500">{helperText}</p> : null}
         </div>
 
         {children}

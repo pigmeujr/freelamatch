@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SearchCityForm } from "@/components/home/search-city-form";
 
@@ -15,6 +15,7 @@ export function JobsFilters({ initialCity, initialState, initialType, states }: 
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [selectedState, setSelectedState] = useState(initialState);
 
   const hiddenFields = useMemo(() => {
     const currentParams = new URLSearchParams(searchParams.toString());
@@ -45,6 +46,7 @@ export function JobsFilters({ initialCity, initialState, initialType, states }: 
         hiddenFields={hiddenFields}
         submitLabel="Atualizar vagas"
         submitOnSelect
+        stateFilter={selectedState}
       >
         <div className="grid gap-3 md:grid-cols-[180px_180px]">
           <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
@@ -53,7 +55,10 @@ export function JobsFilters({ initialCity, initialState, initialType, states }: 
               className="h-12 rounded-2xl border border-slate-300 bg-white px-4 text-sm font-normal text-slate-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               defaultValue={initialState}
               name="estado"
-              onChange={(event) => updateParam("estado", event.target.value)}
+              onChange={(event) => {
+                setSelectedState(event.target.value);
+                updateParam("estado", event.target.value);
+              }}
             >
               <option value="">Todos os estados</option>
               {states.map((state) => (
