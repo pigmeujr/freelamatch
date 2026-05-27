@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthCard } from "@/components/auth/auth-card";
 import { useDashboardStore } from "@/components/providers/dashboard-store-provider";
@@ -23,6 +23,13 @@ export default function LoginPage() {
   const [role, setRole] = useState<Role>("empresa");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError === "confirmacao-email") {
+      setError("Falha na confirmação do e-mail. O link pode ter expirado. Tente fazer login ou cadastre-se novamente.");
+    }
+  }, [searchParams]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

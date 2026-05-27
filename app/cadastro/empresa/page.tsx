@@ -47,7 +47,7 @@ export default function CadastroEmpresaPage() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard/empresa`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=/dashboard/empresa`,
         },
       });
 
@@ -123,7 +123,7 @@ export default function CadastroEmpresaPage() {
         <AuthCard
           eyebrow="Quase lá!"
           title="Confirme seu e-mail"
-          description="Enviamos um link de confirmação para o seu e-mail. Clique no link para ativar sua conta."
+          description="Enviamos um e-mail de confirmação. Verifique sua caixa de entrada e clique no link para ativar sua conta."
           footer={
             <p className="text-sm text-slate-600">
               Já confirmou?{" "}

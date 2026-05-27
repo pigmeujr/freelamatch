@@ -2,24 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-
-type IbgeCity = {
-  id: number;
-  nome: string;
-  microrregiao: {
-    mesorregiao: {
-      UF: {
-        sigla: string;
-      };
-    };
-  };
-};
-
-type CitySuggestion = {
-  id: number;
-  name: string;
-  state: string;
-};
+import { loadCities, normalizeName, type CitySuggestion } from "@/lib/ibge";
 
 type CityAutocompleteFieldProps = {
   value: string;
@@ -27,30 +10,6 @@ type CityAutocompleteFieldProps = {
   onCityChange: (value: string) => void;
   onStateChange: (value: string) => void;
 };
-
-let citiesCache: CitySuggestion[] | null = null;
-
-async function loadCities() {
-  if (citiesCache) {
-    return citiesCache;
-  }
-
-  const response = await fetch("https://servicodados.ibge.gov.br/api/v1/localidades/municipios");
-
-  if (!response.ok) {
-    throw new Error("Não foi possível carregar cidades do IBGE.");
-  }
-
-  const data = (await response.json()) as IbgeCity[];
-
-  citiesCache = data.map((city) => ({
-    id: city.id,
-    name: city.nome,
-    state: city.microrregiao.mesorregiao.UF.sigla,
-  }));
-
-  return citiesCache;
-}
 
 export function CityAutocompleteField({
   value,
@@ -76,9 +35,9 @@ export function CityAutocompleteField({
 
       try {
         const allCities = await loadCities();
-        const normalizedInput = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const normalizedInput = normalizeName(value);
         const filtered = allCities
-          .filter((city) => city.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedInput))
+          .filter((city) => normalizeName(city.name).includes(normalizedInput))
           .slice(0, 8);
 
         if (isMounted) {
