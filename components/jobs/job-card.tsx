@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { formatCurrency, formatPublishedAt } from "@/lib/jobs";
-import type { MockJob } from "@/lib/mock-data";
+import type { PublicJob } from "@/lib/jobs";
 
 type JobCardProps = {
-  job: MockJob;
+  job: PublicJob;
 };
 
 export function JobCard({ job }: JobCardProps) {
-  const isDestaque = job.empresa.planoAtivo === "pro";
-  const isVerificada = job.empresa.planoAtivo === "pro";
+  const isDestaque = !!job.empresa.planoAtivo;
+  const isVerificada = !!job.empresa.planoAtivo;
 
   return (
     <Link

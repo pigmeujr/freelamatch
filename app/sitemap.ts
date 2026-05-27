@@ -1,20 +1,22 @@
 import type { MetadataRoute } from "next";
-import { mockJobs } from "@/lib/mock-data";
-import { getAvailableCities } from "@/lib/jobs";
+import { fetchAvailableCities, fetchRecentJobs } from "@/lib/jobs-server";
 
 const BASE_URL = "https://www.freelamatch.com.br";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const jobEntries: MetadataRoute.Sitemap = mockJobs
-    .filter((job) => job.ativa)
-    .map((job) => ({
-      url: `${BASE_URL}/vagas/${job.id}`,
-      lastModified: new Date(job.createdAt),
-      changeFrequency: "weekly",
-      priority: 0.8,
-    }));
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [jobs, cities] = await Promise.all([
+    fetchRecentJobs(100),
+    fetchAvailableCities(),
+  ]);
 
-  const cityEntries: MetadataRoute.Sitemap = getAvailableCities().map(({ slug }) => ({
+  const jobEntries: MetadataRoute.Sitemap = jobs.map((job) => ({
+    url: `${BASE_URL}/vagas/${job.id}`,
+    lastModified: new Date(job.createdAt),
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  const cityEntries: MetadataRoute.Sitemap = cities.map(({ slug }) => ({
     url: `${BASE_URL}/vagas/cidade/${slug}`,
     lastModified: new Date(),
     changeFrequency: "daily",

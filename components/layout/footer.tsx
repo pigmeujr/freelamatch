@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { getAvailableCities } from "@/lib/jobs";
 
 export function Footer() {
-  const cities = getAvailableCities();
-
   return (
     <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -47,17 +44,12 @@ export function Footer() {
 
           <div className="sm:col-span-2 lg:col-span-2">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Vagas por cidade</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {cities.map(({ slug, nome, estado }) => (
-                <Link
-                  key={slug}
-                  href={`/vagas/cidade/${slug}`}
-                  className="inline-flex rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
-                >
-                  {nome}, {estado}
-                </Link>
-              ))}
-            </div>
+            <p className="mt-4 text-sm text-slate-500">
+              Encontre vagas freelancer na sua cidade em todo o Brasil.{" "}
+              <Link href="/vagas" className="font-medium text-brand-700 hover:text-brand-800">
+                Explorar vagas →
+              </Link>
+            </p>
           </div>
         </div>
 

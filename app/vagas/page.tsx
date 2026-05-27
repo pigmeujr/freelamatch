@@ -3,8 +3,10 @@ import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { JobCard } from "@/components/jobs/job-card";
 import { JobsFilters } from "@/components/jobs/jobs-filters";
-import { getAvailableStates, getPublicJobs } from "@/lib/jobs";
+import { fetchPublicJobs } from "@/lib/jobs-server";
+import { getAvailableStates } from "@/lib/jobs";
 import type { ValorType } from "@/lib/mock-data";
+import Link from "next/link";
 
 type VagasPageProps = {
   searchParams?: {
@@ -35,16 +37,19 @@ export function generateMetadata({ searchParams }: VagasPageProps): Metadata {
   };
 }
 
-export default function VagasPage({ searchParams }: VagasPageProps) {
+export default async function VagasPage({ searchParams }: VagasPageProps) {
   const cidade = searchParams?.cidade ?? "";
   const estado = searchParams?.estado ?? "";
   const tipo = searchParams?.tipo ?? "";
-  const jobs = getPublicJobs({
+
+  const jobs = await fetchPublicJobs({
     cidade,
     estado,
     tipoValor: tipo,
   });
+
   const availableStates = getAvailableStates();
+  const hasFilters = !!(cidade || estado || tipo);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -88,12 +93,43 @@ export default function VagasPage({ searchParams }: VagasPageProps) {
                 <JobCard key={job.id} job={job} />
               ))}
             </div>
-          ) : (
+          ) : hasFilters ? (
             <div className="mt-8 rounded-[28px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm">
               <h3 className="text-2xl font-semibold text-slate-900">Nenhuma vaga encontrada</h3>
               <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600">
                 Tente ajustar a cidade, o estado ou o tipo de valor para ampliar a busca.
               </p>
+              <Link
+                href="/vagas"
+                className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Limpar filtros
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-8 rounded-[28px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-50">
+                <span className="text-3xl">📋</span>
+              </div>
+              <h3 className="text-2xl font-semibold text-slate-900">Nenhuma vaga disponível no momento</h3>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600">
+                Ainda não há vagas publicadas. Empresas podem cadastrar oportunidades gratuitamente e alcançar
+                freelancers de todo o Brasil.
+              </p>
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  href="/cadastro/empresa"
+                  className="inline-flex h-11 items-center justify-center rounded-2xl bg-brand-600 px-6 text-sm font-semibold text-white transition hover:bg-brand-700"
+                >
+                  Publicar vaga gratuitamente
+                </Link>
+                <Link
+                  href="/cadastro/freelancer"
+                  className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Sou freelancer
+                </Link>
+              </div>
             </div>
           )}
         </section>

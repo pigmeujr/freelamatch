@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { JobCard } from "@/components/jobs/job-card";
-import { getAvailableCities, getCityBySlug, getJobsByCitySlug } from "@/lib/jobs";
+import { fetchCityBySlug, fetchJobsBySlug } from "@/lib/jobs-server";
 
 type CidadePageProps = {
   params: {
@@ -12,19 +12,15 @@ type CidadePageProps = {
   };
 };
 
-export function generateStaticParams() {
-  return getAvailableCities().map(({ slug }) => ({ cidade: slug }));
-}
-
-export function generateMetadata({ params }: CidadePageProps): Metadata {
-  const city = getCityBySlug(params.cidade);
+export async function generateMetadata({ params }: CidadePageProps): Promise<Metadata> {
+  const city = await fetchCityBySlug(params.cidade);
 
   if (!city) {
-    return { title: "Cidade nao encontrada" };
+    return { title: "Cidade não encontrada" };
   }
 
   const title = `Vagas Freelancer em ${city.nome}`;
-  const description = `Encontre vagas freelancer em ${city.nome}, ${city.estado}. Trabalhos pagos por dia, hora ou projeto para profissionais autonomos locais.`;
+  const description = `Encontre vagas freelancer em ${city.nome}, ${city.estado}. Trabalhos pagos por dia, hora ou projeto para profissionais autônomos locais.`;
 
   return {
     title,
@@ -39,20 +35,20 @@ export function generateMetadata({ params }: CidadePageProps): Metadata {
   };
 }
 
-export default function CidadePage({ params }: CidadePageProps) {
-  const city = getCityBySlug(params.cidade);
+export default async function CidadePage({ params }: CidadePageProps) {
+  const city = await fetchCityBySlug(params.cidade);
 
   if (!city) {
     notFound();
   }
 
-  const jobs = getJobsByCitySlug(params.cidade);
+  const jobs = await fetchJobsBySlug(params.cidade);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: `Vagas Freelancer em ${city.nome}`,
-    description: `Lista de vagas freelancer disponiveis em ${city.nome}, ${city.estado}`,
+    description: `Lista de vagas freelancer disponíveis em ${city.nome}, ${city.estado}`,
     numberOfItems: jobs.length,
     itemListElement: jobs.map((job, index) => ({
       "@type": "ListItem",
@@ -88,7 +84,7 @@ export default function CidadePage({ params }: CidadePageProps) {
           <section className="border-b border-slate-200 bg-white">
             <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
               <Link className="text-sm font-medium text-brand-700 hover:text-brand-800" href="/vagas">
-                ← Todas as cidades
+                ← Todas as vagas
               </Link>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <span className="inline-flex rounded-full border border-brand-100 bg-brand-50 px-4 py-1 text-sm font-medium text-brand-700">
@@ -103,8 +99,8 @@ export default function CidadePage({ params }: CidadePageProps) {
                 <span className="text-brand-600">{city.nome}</span>
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Oportunidades para profissionais autonomos em {city.nome}, {city.estado}. Trabalhos pagos por dia, hora ou
-                projeto.
+                Oportunidades para profissionais autônomos em {city.nome}, {city.estado}. Trabalhos pagos por dia, hora
+                ou projeto.
               </p>
             </div>
           </section>
@@ -118,7 +114,7 @@ export default function CidadePage({ params }: CidadePageProps) {
                     href="/vagas"
                     className="text-sm font-medium text-brand-700 hover:text-brand-800"
                   >
-                    Ver todas as cidades →
+                    Ver todas as vagas →
                   </Link>
                 </div>
                 <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
@@ -131,7 +127,7 @@ export default function CidadePage({ params }: CidadePageProps) {
               <div className="rounded-[28px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm">
                 <h3 className="text-2xl font-semibold text-slate-900">Nenhuma vaga ativa nesta cidade</h3>
                 <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600">
-                  No momento nao ha vagas abertas em {city.nome}. Explore outras cidades ou cadastre-se para receber
+                  No momento não há vagas abertas em {city.nome}. Explore outras cidades ou cadastre-se para receber
                   alertas.
                 </p>
                 <Link
@@ -142,26 +138,6 @@ export default function CidadePage({ params }: CidadePageProps) {
                 </Link>
               </div>
             )}
-          </section>
-
-          {/* Links for other cities */}
-          <section className="border-t border-slate-200 bg-white">
-            <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-              <h2 className="mb-5 text-lg font-semibold text-slate-900">Outras cidades</h2>
-              <div className="flex flex-wrap gap-2">
-                {getAvailableCities()
-                  .filter(({ slug }) => slug !== params.cidade)
-                  .map(({ slug, nome, estado }) => (
-                    <Link
-                      key={slug}
-                      href={`/vagas/cidade/${slug}`}
-                      className="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
-                    >
-                      {nome}, {estado}
-                    </Link>
-                  ))}
-              </div>
-            </div>
           </section>
         </main>
         <Footer />

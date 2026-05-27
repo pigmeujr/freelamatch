@@ -4,8 +4,8 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { ButtonLink } from "@/components/ui/button-link";
-import { formatCurrency, formatPublishedAt, getJobById } from "@/lib/jobs";
-import { mockJobs } from "@/lib/mock-data";
+import { fetchJobById } from "@/lib/jobs-server";
+import { formatCurrency, formatPublishedAt } from "@/lib/jobs";
 
 type VagaDetalhePageProps = {
   params: {
@@ -13,12 +13,8 @@ type VagaDetalhePageProps = {
   };
 };
 
-export function generateStaticParams() {
-  return mockJobs.map((job) => ({ id: job.id }));
-}
-
-export function generateMetadata({ params }: VagaDetalhePageProps): Metadata {
-  const job = getJobById(params.id);
+export async function generateMetadata({ params }: VagaDetalhePageProps): Promise<Metadata> {
+  const job = await fetchJobById(params.id);
 
   if (!job) {
     return { title: "Vaga não encontrada" };
@@ -55,8 +51,8 @@ function getCompanyInitials(name: string) {
     .toUpperCase();
 }
 
-export default function VagaDetalhePage({ params }: VagaDetalhePageProps) {
-  const job = getJobById(params.id);
+export default async function VagaDetalhePage({ params }: VagaDetalhePageProps) {
+  const job = await fetchJobById(params.id);
 
   if (!job) {
     notFound();
@@ -134,7 +130,7 @@ export default function VagaDetalhePage({ params }: VagaDetalhePageProps) {
                       {job.cidade}, {job.estado}
                     </p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {job.bairro} • {job.endereco}
+                      {job.bairro}{job.endereco ? ` • ${job.endereco}` : ""}
                     </p>
                   </div>
                 </div>
@@ -168,14 +164,18 @@ export default function VagaDetalhePage({ params }: VagaDetalhePageProps) {
               <h2 className="text-2xl font-semibold text-slate-900">Descrição da oportunidade</h2>
               <p className="mt-4 text-base leading-8 text-slate-600">{job.descricao}</p>
 
-              <h3 className="mt-8 text-xl font-semibold text-slate-900">Requisitos</h3>
-              <ul className="mt-4 space-y-3">
-                {job.requisitos.map((requirement) => (
-                  <li key={requirement} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    {requirement}
-                  </li>
-                ))}
-              </ul>
+              {job.requisitos.length > 0 && (
+                <>
+                  <h3 className="mt-8 text-xl font-semibold text-slate-900">Requisitos</h3>
+                  <ul className="mt-4 space-y-3">
+                    {job.requisitos.map((requirement) => (
+                      <li key={requirement} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        {requirement}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
 
             <div className="rounded-[28px] border border-slate-200 bg-slate-900 p-6 text-white shadow-soft">
@@ -185,13 +185,15 @@ export default function VagaDetalhePage({ params }: VagaDetalhePageProps) {
                   <p className="text-sm text-brand-200">Horário</p>
                   <p className="mt-1 text-lg font-semibold">{job.horario}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-brand-200">Endereço</p>
-                  <p className="mt-1 text-lg font-semibold">{job.endereco}</p>
-                  <p className="text-sm text-slate-300">
-                    {job.bairro} • {job.cidade}, {job.estado}
-                  </p>
-                </div>
+                {(job.endereco || job.bairro) && (
+                  <div>
+                    <p className="text-sm text-brand-200">Endereço</p>
+                    {job.endereco && <p className="mt-1 text-lg font-semibold">{job.endereco}</p>}
+                    <p className="text-sm text-slate-300">
+                      {job.bairro ? `${job.bairro} • ` : ""}{job.cidade}, {job.estado}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm text-brand-200">Empresa</p>
                   <p className="mt-1 text-lg font-semibold">{job.empresa.nome}</p>
