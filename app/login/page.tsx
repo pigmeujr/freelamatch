@@ -57,15 +57,20 @@ export default function LoginPage() {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
       if (signInError) {
-        if (
-          signInError.message.includes("Invalid login credentials") ||
-          signInError.message.includes("invalid_credentials")
-        ) {
-          setError("E-mail ou senha incorretos.");
-        } else if (signInError.message.includes("Email not confirmed")) {
-          setError("E-mail não confirmado. Verifique sua caixa de entrada.");
+        console.error("Login error:", signInError);
+        const msg = signInError.message.toLowerCase();
+        const code = (signInError as { code?: string }).code ?? "";
+
+        if (code === "email_not_confirmed" || msg.includes("email not confirmed")) {
+          setError("Verifique seu e-mail antes de fazer login. Clique no link de confirmação que enviamos.");
+        } else if (code === "invalid_credentials" || msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
+          setError("E-mail ou senha incorretos. Verifique os dados e tente novamente.");
+        } else if (msg.includes("user not found") || msg.includes("no user found")) {
+          setError("Usuário não encontrado. Verifique o e-mail ou crie uma conta.");
+        } else if (msg.includes("too many requests") || msg.includes("rate limit")) {
+          setError("Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.");
         } else {
-          setError(signInError.message);
+          setError(signInError.message || "Erro ao fazer login. Tente novamente.");
         }
         return;
       }

@@ -40,17 +40,38 @@ export default function CadastroFreelancerPage() {
 
       const supabase = createClient();
 
-      // 1. Criar usuário no Supabase Auth
+      // Verificar se CPF já está em uso
+      const { data: cpfDisponivel, error: cpfCheckError } = await supabase.rpc("check_cpf_available", {
+        p_cpf: cpf,
+      });
+      if (cpfCheckError) {
+        console.error("Erro ao verificar CPF:", cpfCheckError);
+      } else if (cpfDisponivel === false) {
+        setError("CPF já cadastrado. Tente fazer login ou use outro CPF.");
+        return;
+      }
+
+      // 1. Criar usuário no Supabase Auth com metadados completos
+      // O trigger 'on_auth_user_created' cria automaticamente profile + freelancer
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/confirm?next=/dashboard/freelancer`,
+          data: {
+            role: "freelancer",
+            nome_completo,
+            cpf,
+            cidade,
+            estado,
+            telefone: telefone || null,
+          },
         },
       });
 
       if (signUpError) {
         const msg = signUpError.message;
+        console.error("SignUp error:", signUpError);
         if (msg.includes("already registered") || msg.includes("already in use") || msg.includes("User already registered")) {
           setError("Este e-mail já está cadastrado. Tente fazer login.");
         } else if (msg.includes("Password should be at least") || msg.includes("password")) {
@@ -67,46 +88,40 @@ export default function CadastroFreelancerPage() {
         return;
       }
 
-      // 2. Inserir profile
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: user.id,
-        email,
-        role: "freelancer" as const,
-      });
-
-      if (profileError && !profileError.message.includes("duplicate")) {
-        console.error("Profile insert error:", profileError);
-      }
-
-      // 3. Inserir freelancer
-      const { error: freelancerError } = await supabase.from("freelancers").insert({
-        id: user.id,
-        nome_completo,
-        cpf,
-        cidade,
-        estado,
-        telefone: telefone || null,
-      });
-
-      if (freelancerError) {
-        console.error("Freelancer insert error:", freelancerError);
-        if (freelancerError.message.includes("unique") || freelancerError.message.includes("duplicate")) {
-          setError("CPF já cadastrado. Tente fazer login ou use outro CPF.");
-        } else {
-          setError("Conta criada, mas houve erro ao salvar dados. Faça login e complete seu perfil.");
-        }
-        return;
-      }
-
-      // Se retornou sessão (email confirmation desabilitado): redireciona direto
+      // 2. Se há sessão (confirmação desabilitada): garantir dados corretos via upsert
       if (authData.session) {
+        const { error: freelancerError } = await supabase.from("freelancers").upsert(
+          {
+            id: user.id,
+            nome_completo,
+            cpf,
+            cidade,
+            estado,
+            telefone: telefone || null,
+          },
+          { onConflict: "id" },
+        );
+
+        if (freelancerError) {
+          console.error("Freelancer upsert error:", freelancerError);
+          // Fazer logout para evitar sessão com perfil incompleto
+          await supabase.auth.signOut();
+          if (freelancerError.message.includes("unique") || freelancerError.message.includes("duplicate")) {
+            setError("CPF já cadastrado. Tente fazer login ou use outro CPF.");
+          } else {
+            setError(`Erro ao salvar dados do perfil: ${freelancerError.message}. Tente novamente.`);
+          }
+          return;
+        }
+
         router.push("/dashboard/freelancer");
         router.refresh();
       } else {
-        // Email confirmation habilitado: mostra aviso
+        // Email confirmation habilitado: trigger já criou profile + freelancer com os metadados
         setWaitingConfirmation(true);
       }
-    } catch {
+    } catch (err) {
+      console.error("Erro inesperado no cadastro:", err);
       setError("Ocorreu um erro inesperado. Tente novamente.");
     } finally {
       setIsLoading(false);

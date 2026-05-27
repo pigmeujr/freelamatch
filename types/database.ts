@@ -171,7 +171,16 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      check_cpf_available: {
+        Args: { p_cpf: string };
+        Returns: boolean;
+      };
+      check_cnpj_available: {
+        Args: { p_cnpj: string };
+        Returns: boolean;
+      };
+    };
     Enums: {
       user_role: "empresa" | "freelancer";
       tipo_valor_vaga: "dia" | "hora" | "projeto";

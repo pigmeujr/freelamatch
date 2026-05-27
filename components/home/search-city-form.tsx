@@ -37,18 +37,20 @@ export function SearchCityForm({
   const [cities, setCities] = useState<CitySuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     async function searchCities() {
-      if (cityInput.trim().length < 3) {
+      if (cityInput.trim().length < 2) {
         setCities([]);
         setIsOpen(false);
         return;
       }
 
       setIsLoading(true);
+      setLoadError(false);
 
       try {
         const allCities = await loadCities();
@@ -57,7 +59,9 @@ export function SearchCityForm({
         const filteredCities = allCities
           .filter((city) => {
             const matchesName = normalizeName(city.name).includes(normalizedInput);
-            const matchesState = stateFilter ? city.state === stateFilter : true;
+            const matchesState = stateFilter
+              ? city.state.toUpperCase() === stateFilter.toUpperCase()
+              : true;
             return matchesName && matchesState;
           })
           .slice(0, 8);
@@ -70,6 +74,7 @@ export function SearchCityForm({
         if (isMounted) {
           setCities([]);
           setIsOpen(false);
+          setLoadError(true);
         }
       } finally {
         if (isMounted) {
@@ -91,18 +96,22 @@ export function SearchCityForm({
       return "Buscando cidades...";
     }
 
-    if (cityInput.trim().length < 3) {
-      return "Digite pelo menos 3 letras para ver sugestões.";
+    if (loadError) {
+      return "Erro ao carregar cidades. Verifique sua conexão.";
     }
 
-    if (cities.length === 0) {
+    if (cityInput.trim().length < 2) {
+      return "Digite pelo menos 2 letras para ver sugestões.";
+    }
+
+    if (!isOpen && cities.length === 0) {
       return stateFilter
-        ? `Nenhuma cidade encontrada em ${stateFilter}. Tente outro nome ou mude o estado.`
+        ? `Nenhuma cidade encontrada em ${stateFilter}. Tente outro nome.`
         : "Nenhuma cidade encontrada. Verifique o nome digitado.";
     }
 
     return null;
-  }, [cities.length, cityInput, isLoading, stateFilter]);
+  }, [cities.length, cityInput, isLoading, loadError, isOpen, stateFilter]);
 
   function navigateWithParams(city: string) {
     const params = new URLSearchParams();

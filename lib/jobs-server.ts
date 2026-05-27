@@ -2,6 +2,32 @@ import { createClient } from "@/lib/supabase/server";
 import { slugifyCity, type JobFilters, type PublicJob } from "@/lib/jobs";
 
 // =====================================================
+// IBGE FALLBACK (usado quando cidade não tem vagas ainda)
+// =====================================================
+
+type IbgeMunicipioRaw = {
+  id: number;
+  nome: string;
+  microrregiao: { mesorregiao: { UF: { sigla: string } } };
+};
+
+async function fetchCityBySlugFromIBGE(slug: string): Promise<{ nome: string; estado: string } | null> {
+  try {
+    const response = await fetch(
+      "https://servicodados.ibge.gov.br/api/v1/localidades/municipios",
+      { next: { revalidate: 86400 } }, // cache 24h
+    );
+    if (!response.ok) return null;
+    const cities: IbgeMunicipioRaw[] = await response.json();
+    const match = cities.find((c) => slugifyCity(c.nome) === slug);
+    if (!match) return null;
+    return { nome: match.nome, estado: match.microrregiao.mesorregiao.UF.sigla };
+  } catch {
+    return null;
+  }
+}
+
+// =====================================================
 // INTERNAL TYPES
 // =====================================================
 
@@ -152,9 +178,13 @@ export async function fetchCityBySlug(
       .select("cidade, estado")
       .eq("ativa", true);
 
-    if (error || !data) return null;
-    const match = data.find((row) => slugifyCity(row.cidade) === slug);
-    return match ? { nome: match.cidade, estado: match.estado } : null;
+    if (!error && data) {
+      const match = data.find((row) => slugifyCity(row.cidade) === slug);
+      if (match) return { nome: match.cidade, estado: match.estado };
+    }
+
+    // Fallback: buscar no IBGE para cidades sem vagas ainda
+    return await fetchCityBySlugFromIBGE(slug);
   } catch {
     return null;
   }

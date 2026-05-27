@@ -124,18 +124,31 @@ export default async function CidadePage({ params }: CidadePageProps) {
                 </div>
               </>
             ) : (
-              <div className="rounded-[28px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm">
-                <h3 className="text-2xl font-semibold text-slate-900">Nenhuma vaga ativa nesta cidade</h3>
-                <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600">
-                  No momento não há vagas abertas em {city.nome}. Explore outras cidades ou cadastre-se para receber
-                  alertas.
+              <div className="rounded-[28px] border border-dashed border-slate-300 bg-white px-6 py-14 text-center shadow-sm">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-3xl">
+                  🏙️
+                </div>
+                <h3 className="text-2xl font-semibold text-slate-900">
+                  Nenhuma vaga em {city.nome} ainda
+                </h3>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">
+                  Seja o primeiro a publicar uma oportunidade em {city.nome}! Empresas que publicam
+                  vagas locais encontram ótimos profissionais autônomos rapidamente.
                 </p>
-                <Link
-                  href="/vagas"
-                  className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl bg-brand-600 px-6 text-sm font-semibold text-white transition hover:bg-brand-700"
-                >
-                  Ver todas as vagas
-                </Link>
+                <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                  <Link
+                    href="/cadastro/empresa"
+                    className="inline-flex h-11 items-center justify-center rounded-2xl bg-brand-600 px-6 text-sm font-semibold text-white transition hover:bg-brand-700"
+                  >
+                    Publicar vaga agora
+                  </Link>
+                  <Link
+                    href="/vagas"
+                    className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Ver vagas em outras cidades
+                  </Link>
+                </div>
               </div>
             )}
           </section>

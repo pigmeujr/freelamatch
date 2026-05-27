@@ -20,6 +20,7 @@ export function CityAutocompleteField({
   const [cities, setCities] = useState<CitySuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -32,6 +33,7 @@ export function CityAutocompleteField({
       }
 
       setIsLoading(true);
+      setLoadError(false);
 
       try {
         const allCities = await loadCities();
@@ -48,6 +50,7 @@ export function CityAutocompleteField({
         if (isMounted) {
           setCities([]);
           setIsOpen(false);
+          setLoadError(true);
         }
       } finally {
         if (isMounted) {
@@ -65,16 +68,12 @@ export function CityAutocompleteField({
   }, [value]);
 
   const helperText = useMemo(() => {
-    if (isLoading) {
-      return "Buscando cidades no IBGE...";
-    }
-
-    if (value.trim().length >= 2 && cities.length === 0) {
-      return "Nenhuma cidade encontrada.";
-    }
-
-    return "Digite pelo menos 2 letras para sugerir cidade e UF.";
-  }, [cities.length, isLoading, value]);
+    if (isLoading) return "Buscando cidades no IBGE...";
+    if (loadError) return "Erro ao carregar cidades. Verifique sua conexão.";
+    if (value.trim().length < 2) return "Digite pelo menos 2 letras para sugerir cidade e UF.";
+    if (!isOpen && cities.length === 0) return "Nenhuma cidade encontrada.";
+    return null;
+  }, [cities.length, isLoading, loadError, value, isOpen]);
 
   return (
     <div className="relative">
@@ -115,9 +114,15 @@ export function CityAutocompleteField({
           </ul>
         </div>
       ) : null}
-      <p className="mt-2 px-1 text-xs text-slate-500">
-        {stateValue ? `${helperText} UF selecionada: ${stateValue}.` : helperText}
-      </p>
+      {(helperText || stateValue) && (
+        <p className="mt-2 px-1 text-xs text-slate-500">
+          {stateValue
+            ? helperText
+              ? `${helperText} UF selecionada: ${stateValue}.`
+              : `UF selecionada: ${stateValue}.`
+            : helperText}
+        </p>
+      )}
     </div>
   );
 }
