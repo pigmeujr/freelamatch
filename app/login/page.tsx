@@ -82,15 +82,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Busca o perfil para saber o role
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .limit(1);
-
-      const profile = profiles?.[0];
-      const userRole = profile?.role ?? "freelancer";
+      // Pega o role do user_metadata (gravado no cadastro)
+      const userRole = (user.user_metadata?.role as string) || "freelancer";
       const next = searchParams.get("next");
       const destination = next ?? (userRole === "empresa" ? "/dashboard/empresa" : "/dashboard/freelancer");
 
