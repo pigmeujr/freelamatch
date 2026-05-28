@@ -1,14 +1,4 @@
-export type IbgeCity = {
-  id: number;
-  nome: string;
-  microrregiao: {
-    mesorregiao: {
-      UF: {
-        sigla: string;
-      };
-    };
-  };
-};
+import citiesData from "./cities.json";
 
 export type CitySuggestion = {
   id: number;
@@ -16,27 +6,9 @@ export type CitySuggestion = {
   state: string;
 };
 
-let citiesCache: CitySuggestion[] | null = null;
+const citiesCache: CitySuggestion[] = citiesData as CitySuggestion[];
 
 export async function loadCities(): Promise<CitySuggestion[]> {
-  if (citiesCache) {
-    return citiesCache;
-  }
-
-  const response = await fetch("https://servicodados.ibge.gov.br/api/v1/localidades/municipios");
-
-  if (!response.ok) {
-    throw new Error("Não foi possível carregar cidades do IBGE.");
-  }
-
-  const data = (await response.json()) as IbgeCity[];
-
-  citiesCache = data.map((city) => ({
-    id: city.id,
-    name: city.nome,
-    state: city.microrregiao.mesorregiao.UF.sigla,
-  }));
-
   return citiesCache;
 }
 

@@ -95,6 +95,7 @@ export default function LoginPage() {
       const next = searchParams.get("next");
       const destination = next ?? (userRole === "empresa" ? "/dashboard/empresa" : "/dashboard/freelancer");
 
+      console.log("Login sucesso, redirecionando para:", destination);
       // Hard redirect garante que o middleware leia os cookies de sessão corretamente
       window.location.href = destination;
     } catch {
