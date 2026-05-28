@@ -54,7 +54,7 @@ export default function LoginPage() {
       const password = (form.elements.namedItem("password") as HTMLInputElement).value;
 
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
       if (signInError) {
         console.error("Login error:", signInError);
@@ -75,16 +75,14 @@ export default function LoginPage() {
         return;
       }
 
-      // Busca o perfil para saber o role
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = signInData.user;
 
       if (!user) {
         setError("Erro ao obter dados do usuário. Tente novamente.");
         return;
       }
 
+      // Busca o perfil para saber o role
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
