@@ -47,7 +47,7 @@ export default function CadastroFreelancerPage() {
       if (cpfCheckError) {
         console.error("Erro ao verificar CPF:", cpfCheckError);
       } else if (cpfDisponivel === false) {
-        setError("CPF já cadastrado. Tente fazer login ou use outro CPF.");
+        setError("Este CPF já está cadastrado. Faça login ou use outro CPF.");
         return;
       }
 
@@ -107,7 +107,7 @@ export default function CadastroFreelancerPage() {
           // Fazer logout para evitar sessão com perfil incompleto
           await supabase.auth.signOut();
           if (freelancerError.message.includes("unique") || freelancerError.message.includes("duplicate")) {
-            setError("CPF já cadastrado. Tente fazer login ou use outro CPF.");
+            setError("Este CPF já está cadastrado. Faça login ou use outro CPF.");
           } else {
             setError(`Erro ao salvar dados do perfil: ${freelancerError.message}. Tente novamente.`);
           }

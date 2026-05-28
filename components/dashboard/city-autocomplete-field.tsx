@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { loadCities, normalizeName, type CitySuggestion } from "@/lib/ibge";
 
@@ -17,15 +17,35 @@ export function CityAutocompleteField({
   onCityChange,
   onStateChange,
 }: CityAutocompleteFieldProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const justSelectedRef = useRef(false);
+  const [displayValue, setDisplayValue] = useState(value);
   const [cities, setCities] = useState<CitySuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
     async function searchCities() {
+      // Ignorar execução logo após seleção para evitar reabrir o dropdown
+      if (justSelectedRef.current) {
+        justSelectedRef.current = false;
+        return;
+      }
+
       if (value.trim().length < 2) {
         setCities([]);
         setIsOpen(false);
@@ -76,18 +96,22 @@ export function CityAutocompleteField({
   }, [cities.length, isLoading, loadError, value, isOpen]);
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <Input
         autoComplete="off"
         name="cidade"
-        onChange={(event) => onCityChange(event.target.value)}
+        onChange={(event) => {
+          setDisplayValue(event.target.value);
+          onCityChange(event.target.value);
+          onStateChange("");
+        }}
         onFocus={() => {
           if (cities.length > 0) {
             setIsOpen(true);
           }
         }}
         placeholder="Ex.: São Paulo"
-        value={value}
+        value={displayValue}
       />
       {isOpen ? (
         <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
@@ -95,33 +119,26 @@ export function CityAutocompleteField({
             {cities.map((city) => (
               <li key={city.id}>
                 <button
-                  className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                  className="w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50"
                   onClick={(event) => {
                     event.preventDefault();
+                    justSelectedRef.current = true;
+                    setDisplayValue(`${city.name} - ${city.state}`);
                     onCityChange(city.name);
                     onStateChange(city.state);
                     setIsOpen(false);
                   }}
                   type="button"
                 >
-                  <span>{city.name}</span>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">
-                    {city.state}
-                  </span>
+                  {city.name} - {city.state}
                 </button>
               </li>
             ))}
           </ul>
         </div>
       ) : null}
-      {(helperText || stateValue) && (
-        <p className="mt-2 px-1 text-xs text-slate-500">
-          {stateValue
-            ? helperText
-              ? `${helperText} UF selecionada: ${stateValue}.`
-              : `UF selecionada: ${stateValue}.`
-            : helperText}
-        </p>
+      {helperText && (
+        <p className="mt-2 px-1 text-xs text-slate-500">{helperText}</p>
       )}
     </div>
   );

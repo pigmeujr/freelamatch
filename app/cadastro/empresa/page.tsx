@@ -95,7 +95,7 @@ export default function CadastroEmpresaPage() {
       if (cnpjCheckError) {
         console.error("Erro ao verificar CNPJ:", cnpjCheckError);
       } else if (cnpjDisponivel === false) {
-        setError("CNPJ já cadastrado. Tente fazer login ou use outro CNPJ.");
+        setError("Este CNPJ já está cadastrado. Faça login ou use outro CNPJ.");
         return;
       }
 
@@ -159,7 +159,7 @@ export default function CadastroEmpresaPage() {
           console.error("Empresa upsert error:", empresaError);
           await supabase.auth.signOut();
           if (empresaError.message.includes("unique") || empresaError.message.includes("duplicate")) {
-            setError("CNPJ já cadastrado. Tente fazer login ou use outro CNPJ.");
+            setError("Este CNPJ já está cadastrado. Faça login ou use outro CNPJ.");
           } else {
             setError(`Erro ao salvar dados da empresa: ${empresaError.message}. Tente novamente.`);
           }

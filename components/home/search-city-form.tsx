@@ -32,17 +32,37 @@ export function SearchCityForm({
   children,
 }: SearchCityFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const justSelectedRef = useRef(false);
   const router = useRouter();
   const [cityInput, setCityInput] = useState(initialCity);
+  const [selectedCityName, setSelectedCityName] = useState(initialCity);
   const [cities, setCities] = useState<CitySuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
     async function searchCities() {
+      // Ignorar execução logo após seleção para evitar reabrir o dropdown
+      if (justSelectedRef.current) {
+        justSelectedRef.current = false;
+        return;
+      }
+
       if (cityInput.trim().length < 2) {
         setCities([]);
         setIsOpen(false);
@@ -142,7 +162,9 @@ export function SearchCityForm({
   }
 
   function handleSuggestionSelect(city: CitySuggestion) {
-    setCityInput(city.name);
+    justSelectedRef.current = true;
+    setCityInput(`${city.name} - ${city.state}`);
+    setSelectedCityName(city.name);
     setIsOpen(false);
 
     if (submitOnSelect) {
@@ -160,14 +182,16 @@ export function SearchCityForm({
       {hiddenFields.map((field) => (
         <input key={`${field.name}-${field.value}`} name={field.name} type="hidden" value={field.value} />
       ))}
+      {/* Valor real da cidade para form submission nativo */}
+      <input name="cidade" type="hidden" value={selectedCityName || cityInput} />
 
       <div className="flex flex-col gap-3 xl:flex-row xl:items-start">
-        <div className="relative flex-1">
+        <div ref={containerRef} className="relative flex-1">
           <Input
             autoComplete="off"
-            name="cidade"
             onChange={(event) => {
               setCityInput(event.target.value);
+              setSelectedCityName("");
             }}
             onFocus={() => {
               if (cities.length > 0) {
@@ -184,17 +208,14 @@ export function SearchCityForm({
                 {cities.map((city) => (
                   <li key={city.id}>
                     <button
-                      className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                      className="w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50"
                       onClick={(event) => {
                         event.preventDefault();
                         handleSuggestionSelect(city);
                       }}
                       type="button"
                     >
-                      <span>{city.name}</span>
-                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">
-                        {city.state}
-                      </span>
+                      {city.name} - {city.state}
                     </button>
                   </li>
                 ))}
